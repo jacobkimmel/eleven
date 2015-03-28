@@ -7,9 +7,31 @@ Eleven is a Python library for performing multi-gene RT-qPCR gene expression nor
 
 ## How do I use eleven?
 
-Eleven requires Python 2.7. Earlier versions will not be supported. Python 3.x support is on the roadmap. You will need a Scientific Python stack, including pandas and scipy. If you don't have these, you can install the free version of the [Anaconda environment](https://store.continuum.io/cshop/anaconda/), which has everything you need.
+### Installation
+
+Eleven requires Python 2.7. Earlier versions will not be supported. Python 3.x support is on the roadmap. You will need a Scientific Python stack, including [pandas](http://pandas.pydata.org/) and [scipy](http://www.scipy.org/). If you don't have these, you can install the free version of the [Anaconda environment](https://store.continuum.io/cshop/anaconda/), which has everything you need.
 
 Install eleven with `pip install eleven`.
+
+### Data Preperation
+
+Prepare your raw data as a CSV file with three columns named Sample, Target, and Cq.
+
+No template controls should be included as samples with the sample name "NTC." Eleven uses the NTCs to censor background data, so you should have an NTC sample for each Target. 
+
+When finished, your data should like this:
+
+    Sample,Target,Cq
+    Sample1,Target1,Cq
+    Sample2,Target1,Cq
+    ...
+    NTC,Target1,Cq
+    ...
+    SampleN,TargetN,Cq
+    ...
+    NTC,TargetN,Cq
+
+### Analysis
 
 A sample analysis session looks like this:
 
@@ -27,6 +49,10 @@ A sample analysis session looks like this:
     >> censored = eleven.censor_background(df)
 
     # Rank your candidate reference genes.
+    # The rank_targets() function takes 3 arguments: 
+    #   1) a sample data frame (here: censored)
+    #   2) a list of genes to rank from the Target column (here: Gapdh, Rn18s..)
+    #   3) the name of a Sample that exists for each Target (here: Control)
     >> ranked = eleven.rank_targets(censored, ['Gapdh', 'Rn18s', 'Hprt',
         'Ubc', 'Actb'], 'Control')
 
