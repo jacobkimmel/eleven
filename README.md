@@ -7,9 +7,46 @@ Eleven is a Python library for performing multi-gene RT-qPCR gene expression nor
 
 ## How do I use eleven?
 
-Eleven requires Python 2.7. Earlier versions will not be supported. Python 3.x support is on the roadmap. You will need a Scientific Python stack, including pandas and scipy. If you don't have these, you can install the free version of the [Anaconda environment](https://store.continuum.io/cshop/anaconda/), which has everything you need.
+### Installation
+
+Eleven requires Python 2.7. Earlier versions will not be supported. Python 3.x support is on the roadmap. You will need a Scientific Python stack, including [pandas](http://pandas.pydata.org/) and [scipy](http://www.scipy.org/). If you don't have these, you can install the free version of the [Anaconda environment](https://store.continuum.io/cshop/anaconda/), which has everything you need.
 
 Install eleven with `pip install eleven`.
+
+### Data Preperation
+
+**qPCR Data File**
+
+Prepare your raw data as a CSV file with three columns named Sample, Target, and Cq.
+
+No template controls should be included as samples with the sample name "NTC." Eleven uses the NTCs to censor background data, so the naming is important.
+
+When finished, your data should like this:
+
+    Sample,Target,Cq
+    Sample1,Target1,Cq
+    Sample2,Target1,Cq
+    ...
+    NTC,Target1,Cq
+    ...
+    SampleN,TargetN,Cq
+    ...
+    NTC,TargetN,Cq
+    
+**Reference Gene File**
+
+At the interpreter level, eleven has you manually type out a list of reference genes with proper quoting and commas, &c. This can get a little tedious if you have several candidate genes, and typing at the interpreter can be offputting to less technical lab members. 
+
+The easy_eleven script will read a CSV of just gene names, on per line, to eliminate this. If you'd like to use the script, prepare a gene list like so:
+
+    Gene1
+    Gene2
+    ...
+    GeneN
+
+### Analysis
+
+**Manual Analysis at the Interpreter**
 
 A sample analysis session looks like this:
 
@@ -27,6 +64,10 @@ A sample analysis session looks like this:
     >> censored = eleven.censor_background(df)
 
     # Rank your candidate reference genes.
+    # The rank_targets() function takes 3 arguments: 
+    #   1) a sample data frame (here: censored)
+    #   2) a list of genes to rank from the Target column (here: Gapdh, Rn18s..)
+    #   3) the name of a Sample that exists for each Target (here: Control)
     >> ranked = eleven.rank_targets(censored, ['Gapdh', 'Rn18s', 'Hprt',
         'Ubc', 'Actb'], 'Control')
 
@@ -38,6 +79,18 @@ A sample analysis session looks like this:
     >> censored['RelExp'] = eleven.expression_nf(censored, nf, 'Control')
 
 Wasn't that easy? This adds the relative expression of each well as a column of the data frame. Now you can use regular pandas tools for handling the data, so `censored.groupby(['Sample', 'Target'])['RelExp'].aggregate(['mean', 'std'])` gives you a nice table of means and standard deviations for each target in each sample.
+
+**Scripted Analysis - For the Non-technical** 
+
+The interpreter can be frightening to less technical lab memebers. To navigate around that, I wrote a simple script that automates the above process into a one line command. 
+
+The script works like this:
+
+    $ easy_eleven qPCR_data.csv Reference_Genes.csv Name_of_Sample_in_each_Target
+
+The naming scheme of the arguments should be rather self-explanatory. The "Sample in Each Target" refers to the name of a Sample that will be present for each Target gene, used by the rank_target() function described above. 
+
+The script will return a ranked table of reference genes with their corresponding M values, as well as the normalization factors (NFs) and a table of relative expressions. 
 
 ## Isn't Gapdh/Actb/Rn18s good enough?
 
