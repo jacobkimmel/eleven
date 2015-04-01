@@ -7,7 +7,7 @@ import eleven
 '''
 USAGE:
 
-python easy_eleven.py qPCR_data_file.csv Reference_Genes.csv Control_sample_name output_path
+python easy_eleven.py qPCR_data_file.csv Reference_Genes.csv Control_sample_name output_path.xlsx
 
 
 DATA FORMATS:
@@ -29,10 +29,11 @@ Gene3
 Gene4
 
 RETURNS:
-Output of rank_targets()
+raw Cq data frame, censored data frame, ranked genes, and normalization factors
+Exports Excel workbook containing these data
 '''
 
-writer = pd.ExcelWriter(sys.argv[4])
+writer = pd.ExcelWriter(sys.argv[4], engine='xlsxwriter')
 df = pd.read_csv(sys.argv[1])
 print df
 
@@ -57,7 +58,7 @@ print nf
 
 censored['RelExp'] = eleven.expression_nf(censored, nf, constant_sample)
 
-censored.to_excel('Relative_Exp')
+censored.to_excel(writer,'Relative_Exp')
 ranked.to_excel(writer,'Ranked Genes')
 df.to_excel(writer, 'Raw_Data')
 writer.save()

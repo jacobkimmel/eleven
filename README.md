@@ -37,7 +37,7 @@ When finished, your data should like this:
 
 At the interpreter level, eleven has you manually type out a list of reference genes with proper quoting and commas, &c. This can get a little tedious if you have several candidate genes, and typing at the interpreter can be offputting to less technical lab members. 
 
-The easy_eleven script will read a CSV of just gene names, on per line, to eliminate this. If you'd like to use the script, prepare a gene list like so:
+The easy_eleven script will read a CSV of just gene names, one per line, to eliminate this. If you'd like to use the script, prepare a gene list like so:
 
     Gene1
     Gene2
@@ -67,12 +67,15 @@ A sample analysis session looks like this:
     # The rank_targets() function takes 3 arguments: 
     #   1) a sample data frame (here: censored)
     #   2) a list of genes to rank from the Target column (here: Gapdh, Rn18s..)
-    #   3) the name of a Sample that exists for each Target (here: Control)
+    #   3) the name of the Sample present for every gene. 
+    #      it's recommended you use the Sample you will be normalizing to.
     >> ranked = eleven.rank_targets(censored, ['Gapdh', 'Rn18s', 'Hprt',
         'Ubc', 'Actb'], 'Control')
 
     # Normalize your data by your most stable genes and compute normalization
     # factors (NFs).
+    # The 'Control' parameter is the name of the sample which will be set to 
+    # a relative expression == 1. 
     >> nf = eleven.calculate_nf(censored, ranked.ix['Target', 0:3], 'Control')
 
     # Now, normalize all of your expression data.
@@ -82,15 +85,23 @@ Wasn't that easy? This adds the relative expression of each well as a column of 
 
 **Scripted Analysis - For the Non-technical** 
 
-The interpreter can be frightening to less technical lab memebers. To navigate around that, I wrote a simple script that automates the above process into a one line command. 
+Additional requirements for Excel Export: xlwswriter
 
-The script works like this:
+    pip install xlsxwriter
 
-    $ easy_eleven qPCR_data.csv Reference_Genes.csv Name_of_Sample_in_each_Target
+The interpreter can be frightening to less technical lab memebers. Typing at the interpreter can get tedious even for technical users. For these situations, I wrote a simple script that automates the above process into a one line command. 
 
-The naming scheme of the arguments should be rather self-explanatory. The "Sample in Each Target" refers to the name of a Sample that will be present for each Target gene, used by the rank_target() function described above. 
+The script is used like so:
 
-The script will return a ranked table of reference genes with their corresponding M values, as well as the normalization factors (NFs) and a table of relative expressions. 
+    $ python easy_eleven.py qPCR_data.csv Reference_Genes.csv Normalization_Sample ExportExcelFile.xlsx
+
+The naming scheme of the arguments should be rather self-explanatory. The "Normalization Sample" refers to the name of a Sample that will be used as the relative expression value == 1 for relative expression calculations. This Sample must be present for every Target. In other words, all other samples will be calculated with their RelExp value as a factor of this sample. This is commonly the Control in relative expression experiments.  
+
+The script will export an Excel workbook (.xlsx) with a table of reference genes and their corresponding M values, as well as the normalization factors (NFs) and a table of relative expressions.
+
+**Why Excel Export?**
+
+Exporting several tables as sheets in Excel is very convienent with pandas tools. In general, the common users of this script will probably be most comfortable in Excel.
 
 ## Isn't Gapdh/Actb/Rn18s good enough?
 
@@ -106,7 +117,7 @@ Adding other algorithms isn't a priority for me but I'll gladly accept pull requ
 
 ## Why should I use eleven?
 
-Eleven has a simple, clean interface and uses familiar data structures. Also, I think we're the only game in town for PCR analysis in Python.
+Eleven has a simple, clean interface and uses familiar data structures. Also, I think we're the only game in town for qPCR analysis in Python.
 
 There are other options in R; [SLqPCR](http://www.bioconductor.org/packages/devel/bioc/html/SLqPCR.html) is probably the most kindred to eleven. [qpcR](http://www.dr-spiess.de/qpcR.html) does a number of very sophisticated things but I found it correspondingly mysterious. [But, to be fair, I don't like R](http://tim-smith.us/arrgh/).
 
